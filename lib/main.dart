@@ -1,11 +1,14 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'authentication_screens/login_page.dart';
 import 'authentication_screens/registration_page.dart';
 import 'authentication_screens/password_reset_page.dart';
 import 'customer_screens/customer_home.dart';
+import 'garbage_collector_screens/garbage_collector_information_form_page.dart';
 import 'garbage_collector_screens/garbage_collector_home.dart';
 import 'admin_screens/admin_home.dart';
+import 'customer_screens/customer_info_form_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,10 +29,28 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => LoginPage(),
         '/register': (context) => RegistrationPage(),
-        '/reset': (context) => PasswordResetPage(),
         '/customerHome': (context) => CustomerHome(),
         '/garbageCollectorHome': (context) => GarbageCollectorHome(),
         '/adminHome': (context) => AdminHome(),
+        '/reset': (context) => PasswordResetPage(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/customerInfoForm') {
+          final User user = settings.arguments as User;
+          return MaterialPageRoute(
+            builder: (context) {
+              return CustomerInfoFormPage(user: user);
+            },
+          );
+        } else if (settings.name == '/garbageCollectorInfoForm') {
+          final User user = settings.arguments as User;
+          return MaterialPageRoute(
+            builder: (context) {
+              return GarbageCollectorInfoFormPage(user: user);
+            },
+          );
+        }
+        return null;
       },
     );
   }

@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../customer_screens/customer_home.dart';
-import '../garbage_collector_screens/garbage_collector_home.dart';
-import '../admin_screens/admin_home.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../customer_screens/customer_info_form_page.dart';
+import '../garbage_collector_screens/garbage_collector_information_form_page.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -38,29 +37,24 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   Text('Registration successful. Please verify your email.')),
         );
 
-        // Navigate to the appropriate home screen based on role
-        switch (role) {
-          case 'customer':
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => CustomerHome()),
-            );
-            break;
-          case 'garbage_collector':
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => GarbageCollectorHome()),
-            );
-            break;
-          case 'admin':
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => AdminHome()),
-            );
-            break;
-          default:
-            // Navigate to default page or handle error case
-            break;
+        if (role == 'customer') {
+          Navigator.pushReplacementNamed(
+            context,
+            '/customerInfoForm',
+            arguments: user,
+          );
+        } else if (role == 'garbage_collector') {
+          Navigator.pushReplacementNamed(
+            context,
+            '/garbageCollectorInfoForm',
+            arguments: user,
+          );
+        } else {
+          switch (role) {
+            case 'admin':
+              Navigator.pushReplacementNamed(context, '/adminHome');
+              break;
+          }
         }
       }
     } catch (e) {
