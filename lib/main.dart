@@ -29,10 +29,16 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => LoginPage(),
         '/register': (context) => RegistrationPage(),
-        '/customerHome': (context) => CustomerHome(),
-        '/garbageCollectorHome': (context) => GarbageCollectorHome(),
+        '/customerHome': (context) => CustomerHomePage(),
+        '/garbageCollectorHome': (context) => GarbageCollectorHomePage(),
         '/adminHome': (context) => AdminHome(),
         '/reset': (context) => PasswordResetPage(),
+        '/customerInfoForm': (context) => CustomerInfoFormPage(
+              user: ModalRoute.of(context)!.settings.arguments as User,
+            ),
+        '/garbageCollectorInfoForm': (context) => GarbageCollectorInfoFormPage(
+              user: ModalRoute.of(context)!.settings.arguments as User,
+            ),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/customerInfoForm') {

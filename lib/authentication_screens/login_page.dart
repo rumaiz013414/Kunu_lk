@@ -47,13 +47,13 @@ class _LoginPageState extends State<LoginPage> {
       case 'customer':
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => CustomerHome()),
+          MaterialPageRoute(builder: (context) => CustomerHomePage()),
         );
         break;
       case 'garbage_collector':
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => GarbageCollectorHome()),
+          MaterialPageRoute(builder: (context) => GarbageCollectorHomePage()),
         );
         break;
       case 'admin':
