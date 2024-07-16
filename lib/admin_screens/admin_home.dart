@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import './create_garbage_route.dart';
+import './manage_garbage_routes.dart';
 import './view_customers.dart'; // Placeholder for the manage customers page
 import './view_garbage_collectors.dart'; // Placeholder for the manage garbage collectors page
 
@@ -26,12 +26,12 @@ class AdminHome extends StatelessWidget {
             ),
             ListTile(
               leading: Icon(Icons.route),
-              title: Text('Add Routes'),
+              title: Text('Manage Routes'),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => CreateGarbageRoutePage()),
+                      builder: (context) => ManageGarbageRoutesPage()),
                 );
               },
             ),
