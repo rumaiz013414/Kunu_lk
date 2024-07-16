@@ -21,6 +21,9 @@ class _GarbageCollectorInfoFormPageState
   String phoneNumber = '';
   String vehicleDetails = '';
   String nic = '';
+  String collectorAddress = '';
+  String collectorCity = '';
+  String collectorPostalCode = '';
 
   void saveGarbageCollectorInfo() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -30,6 +33,9 @@ class _GarbageCollectorInfoFormPageState
           'phone_number': phoneNumber,
           'vehicle_details': vehicleDetails,
           'nic_no': nic,
+          'collector_address': collectorAddress,
+          'collector_city': collectorCity,
+          'collector_postal_code': collectorPostalCode,
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,6 +108,42 @@ class _GarbageCollectorInfoFormPageState
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your NIC number';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                onChanged: (value) {
+                  collectorAddress = value;
+                },
+                decoration: InputDecoration(hintText: 'Address'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your address';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                onChanged: (value) {
+                  collectorCity = value;
+                },
+                decoration: InputDecoration(hintText: 'City'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your city';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                onChanged: (value) {
+                  collectorPostalCode = value;
+                },
+                decoration: InputDecoration(hintText: 'Postal Code'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your postal code';
                   }
                   return null;
                 },

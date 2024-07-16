@@ -57,7 +57,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed. Please try again.')),
+        SnackBar(content: Text('Account already exists.')),
       );
     }
   }

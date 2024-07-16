@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:testing/customer_profile/customer_profile_details.dart';
+import 'package:testing/customer_profile/customer_profile_photo_page.dart';
+import 'package:testing/garbage_collector_profile/garbage_profile_details.dart';
 import 'authentication_screens/login_page.dart';
 import 'authentication_screens/registration_page.dart';
 import 'authentication_screens/password_reset_page.dart';
@@ -9,6 +12,9 @@ import 'garbage_collector_screens/garbage_collector_information_form_page.dart';
 import 'garbage_collector_screens/garbage_collector_home.dart';
 import 'admin_screens/admin_home.dart';
 import 'customer_screens/customer_info_form_page.dart';
+import 'services/auth_wrapper.dart';
+import 'garbage_collector_profile/edit_garbage_profile_page.dart';
+import 'customer_profile/edit_customer_profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,14 +31,21 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      home: AuthWrapper(),
       initialRoute: '/',
       routes: {
-        '/': (context) => LoginPage(),
+        '/login': (context) => LoginPage(),
         '/register': (context) => RegistrationPage(),
         '/customerHome': (context) => CustomerHomePage(),
         '/garbageCollectorHome': (context) => GarbageCollectorHomePage(),
         '/adminHome': (context) => AdminHome(),
         '/reset': (context) => PasswordResetPage(),
+        '/customerProfile': (context) => CustomerProfileDetails(),
+        '/customerProfilePhoto': (context) => CustomerProfilePhotoPage(),
+        '/editGarbageProfile': (context) => EditGarbageProfilePage(),
+        '/garbageCollectorProfile': (context) =>
+            GarbageCollectorProfileSection(),
+        '/editCustomerProfile': (context) => EditCustomerProfilePage(),
         '/customerInfoForm': (context) => CustomerInfoFormPage(
               user: ModalRoute.of(context)!.settings.arguments as User,
             ),

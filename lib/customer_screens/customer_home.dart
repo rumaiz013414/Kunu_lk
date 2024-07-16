@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../profile_details.dart';
+import '../customer_profile/customer_profile_details.dart';
 
 class CustomerHomePage extends StatefulWidget {
   @override
@@ -12,7 +12,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   static List<Widget> _widgetOptions = <Widget>[
     Text('Home Page'),
     Text('Orders Page'),
-    ProfileSection(),
+    CustomerProfileDetails(),
   ];
 
   void _onItemTapped(int index) {
@@ -24,7 +24,6 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Customer Home')),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
