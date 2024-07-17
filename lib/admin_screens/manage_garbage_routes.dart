@@ -15,7 +15,6 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
   final TextEditingController _endPointController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
-  String? _selectedRouteId;
   String? _selectedWasteType;
 
   @override
@@ -68,7 +67,6 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
         _startTimeController.clear();
         _endTimeController.clear();
         setState(() {
-          _selectedRouteId = null;
           _selectedWasteType = null;
         });
       } catch (e) {
@@ -215,7 +213,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                       final routeData = route.data() as Map<String, dynamic>;
                       return ListTile(
                         title: Text(
-                            'Start: ${routeData['start_point']} - End: ${routeData['end_point']}'),
+                            'ID: ${route.id}\nStart: ${routeData['start_point']} - End: ${routeData['end_point']}'),
                         subtitle: routeData.containsKey('start_time') &&
                                 routeData.containsKey('end_time')
                             ? Text(
