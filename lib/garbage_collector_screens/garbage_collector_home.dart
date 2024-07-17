@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../garbage_collector_profile/garbage_profile_details.dart';
+import 'garbage_collector_profile/garbage_profile_details.dart';
 
 class GarbageCollectorHomePage extends StatefulWidget {
   @override

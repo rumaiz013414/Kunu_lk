@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../customer_profile/customer_profile_details.dart';
+import 'customer_profile/customer_profile_details.dart';
 
 class CustomerHomePage extends StatefulWidget {
   @override

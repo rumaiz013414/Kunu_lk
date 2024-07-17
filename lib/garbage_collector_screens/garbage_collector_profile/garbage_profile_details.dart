@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../garbage_collector_profile/edit_garbage_profile_page.dart'; // Import the edit profile screen
-import '../garbage_collector_profile/garbage_profile_photo_page.dart'; // Import the profile photo screen
+import 'edit_garbage_profile.dart'; // Import the edit profile screen
+import 'garbage_profile_photo.dart'; // Import the profile photo screen
 
 class GarbageCollectorProfileSection extends StatefulWidget {
   @override

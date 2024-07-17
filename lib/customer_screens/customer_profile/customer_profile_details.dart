@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'customer_profile_photo_page.dart';
-import 'edit_customer_profile_page.dart';
+import 'customer_profile_photo.dart';
+import 'edit_customer_profile.dart';
 
 class CustomerProfileDetails extends StatefulWidget {
   @override

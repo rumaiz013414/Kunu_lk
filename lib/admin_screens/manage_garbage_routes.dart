@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'edit_route_page.dart';
+import 'edit_route.dart';
 
 class ManageGarbageRoutesPage extends StatefulWidget {
   @override
