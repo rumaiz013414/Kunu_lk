@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'customer_profile/customer_profile_details.dart';
 import './subscribe_screen.dart';
-import './home_page.dart';
+import './home_page.dart'; // Ensure you have the HomePage widget created
 
 class CustomerHomePage extends StatefulWidget {
   final int initialIndex;
@@ -16,7 +16,8 @@ class CustomerHomePage extends StatefulWidget {
 
 class _CustomerHomePageState extends State<CustomerHomePage> {
   int _selectedIndex = 0;
-  List<String> _subscribedRoutes = [];
+  List<String> _subscribedRouteIds = [];
+  List<Map<String, dynamic>> _subscribedRoutes = [];
   List<Widget> _widgetOptions = [];
 
   @override
@@ -34,17 +35,34 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
           .doc(user.uid)
           .get();
       if (userDoc.exists) {
-        setState(() {
-          _subscribedRoutes =
-              List<String>.from(userDoc.data()?['subscribed_routes'] ?? []);
-          _widgetOptions = <Widget>[
-            HomePage(subscribedRoutes: _subscribedRoutes),
-            SubscribeScreen(),
-            CustomerProfileDetails(),
-          ];
-        });
+        _subscribedRouteIds =
+            List<String>.from(userDoc.data()?['subscribed_routes'] ?? []);
+        _fetchRouteDetails();
       }
     }
+  }
+
+  void _fetchRouteDetails() async {
+    List<Map<String, dynamic>> routes = [];
+    for (String routeId in _subscribedRouteIds) {
+      final routeDoc = await FirebaseFirestore.instance
+          .collection('garbage_routes')
+          .doc(routeId)
+          .get();
+      if (routeDoc.exists) {
+        var routeData = routeDoc.data()!;
+        routeData['id'] = routeDoc.id; // Add route ID to the route data
+        routes.add(routeData);
+      }
+    }
+    setState(() {
+      _subscribedRoutes = routes;
+      _widgetOptions = <Widget>[
+        HomePage(subscribedRoutes: _subscribedRoutes),
+        SubscribeScreen(),
+        CustomerProfileDetails(),
+      ];
+    });
   }
 
   void _onItemTapped(int index) {

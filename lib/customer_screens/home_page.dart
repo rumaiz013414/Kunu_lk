@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
-  final List<String> subscribedRoutes;
+  final List<Map<String, dynamic>> subscribedRoutes;
 
   HomePage({required this.subscribedRoutes});
 
@@ -19,8 +19,19 @@ class HomePage extends StatelessWidget {
             child: ListView.builder(
               itemCount: subscribedRoutes.length,
               itemBuilder: (context, index) {
+                final route = subscribedRoutes[index];
                 return ListTile(
-                  title: Text('Route ID: ${subscribedRoutes[index]}'),
+                  title: Text('Route ID: ${route['id']}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Start: ${route['start_point']}'),
+                      Text('End: ${route['end_point']}'),
+                      Text('Start Time: ${route['start_time']}'),
+                      Text('End Time: ${route['end_time']}'),
+                      Text('Waste Type: ${route['waste_type']}'),
+                    ],
+                  ),
                 );
               },
             ),
