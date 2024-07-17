@@ -1,7 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import './customer_home.dart'; // Import the new home screen
 
 class PaymentPortal extends StatelessWidget {
+  final List<String> selectedRoutes;
+
+  PaymentPortal({required this.selectedRoutes});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -14,11 +20,20 @@ class PaymentPortal extends StatelessWidget {
           children: [
             Text('Payment options and details go here.'),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Simulate successful payment
                 bool paymentSuccess = true; // Replace with your payment logic
 
                 if (paymentSuccess) {
+                  // Save selected routes to Firestore
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .update({'subscribed_routes': selectedRoutes});
+                  }
+
                   // Navigate to the new home screen after successful payment
                   Navigator.pushReplacement(
                     context,

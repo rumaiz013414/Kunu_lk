@@ -35,10 +35,12 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
         print('Route ID: $routeId');
       });
 
-      // Navigate to the payment portal
+      // Navigate to the payment portal and pass the selected routes
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => PaymentPortal()),
+        MaterialPageRoute(
+            builder: (context) =>
+                PaymentPortal(selectedRoutes: _selectedRoutes)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
