@@ -1,7 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import './customer_home.dart'; // Import the new home screen
 
 class PaymentPortal extends StatelessWidget {
   final List<String> selectedRoutes;
@@ -14,38 +11,17 @@ class PaymentPortal extends StatelessWidget {
       appBar: AppBar(
         title: Text('Payment Portal'),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Payment options and details go here.'),
+            Text('Selected Routes:'),
+            ...selectedRoutes.map((routeId) => Text('Route ID: $routeId')),
+            SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                // Simulate successful payment
-                bool paymentSuccess = true; // Replace with your payment logic
-
-                if (paymentSuccess) {
-                  // Save selected routes to Firestore
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user != null) {
-                    await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user.uid)
-                        .update({'subscribed_routes': selectedRoutes});
-                  }
-
-                  // Navigate to the new home screen after successful payment
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => CustomerHomePage()),
-                  );
-                } else {
-                  // Handle payment failure scenario
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Payment failed. Please try again.')),
-                  );
-                }
+              onPressed: () {
+                // Implement payment functionality here
+                print('Proceed to payment');
               },
               child: Text('Proceed to Payment'),
             ),

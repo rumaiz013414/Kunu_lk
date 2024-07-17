@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
-import 'edit_route.dart';
+import './select_route_points.dart';
 
 class ManageGarbageRoutesPage extends StatefulWidget {
   @override
@@ -11,16 +12,14 @@ class ManageGarbageRoutesPage extends StatefulWidget {
 
 class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _startPointController = TextEditingController();
-  final TextEditingController _endPointController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
   String? _selectedWasteType;
+  LatLng? _startPoint;
+  LatLng? _endPoint;
 
   @override
   void dispose() {
-    _startPointController.dispose();
-    _endPointController.dispose();
     _startTimeController.dispose();
     _endTimeController.dispose();
     super.dispose();
@@ -40,18 +39,33 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
     }
   }
 
+  Future<void> _selectRoutePoints() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SelectRoutePointsPage()),
+    );
+
+    if (result != null) {
+      setState(() {
+        _startPoint = result['start'];
+        _endPoint = result['end'];
+      });
+    }
+  }
+
   void _createRoute() async {
-    if (_formKey.currentState!.validate()) {
-      String startPoint = _startPointController.text.trim();
-      String endPoint = _endPointController.text.trim();
+    if (_formKey.currentState!.validate() &&
+        _startPoint != null &&
+        _endPoint != null) {
       String startTime = _startTimeController.text.trim();
       String endTime = _endTimeController.text.trim();
       String wasteType = _selectedWasteType!;
 
       try {
         await FirebaseFirestore.instance.collection('garbage_routes').add({
-          'start_point': startPoint,
-          'end_point': endPoint,
+          'start_point':
+              GeoPoint(_startPoint!.latitude, _startPoint!.longitude),
+          'end_point': GeoPoint(_endPoint!.latitude, _endPoint!.longitude),
           'start_time': startTime,
           'end_time': endTime,
           'waste_type': wasteType,
@@ -62,18 +76,69 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
         );
 
         // Clear the form fields
-        _startPointController.clear();
-        _endPointController.clear();
         _startTimeController.clear();
         _endTimeController.clear();
         setState(() {
           _selectedWasteType = null;
+          _startPoint = null;
+          _endPoint = null;
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Please fill all fields and select route points')),
+      );
+    }
+  }
+
+  void _updateRoute(String routeId) async {
+    if (_formKey.currentState!.validate() &&
+        _startPoint != null &&
+        _endPoint != null) {
+      String startTime = _startTimeController.text.trim();
+      String endTime = _endTimeController.text.trim();
+      String wasteType = _selectedWasteType!;
+
+      try {
+        await FirebaseFirestore.instance
+            .collection('garbage_routes')
+            .doc(routeId)
+            .update({
+          'start_point':
+              GeoPoint(_startPoint!.latitude, _startPoint!.longitude),
+          'end_point': GeoPoint(_endPoint!.latitude, _endPoint!.longitude),
+          'start_time': startTime,
+          'end_time': endTime,
+          'waste_type': wasteType,
+          'updated_at': Timestamp.now(),
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Route updated successfully')),
+        );
+
+        // Clear the form fields
+        _startTimeController.clear();
+        _endTimeController.clear();
+        setState(() {
+          _selectedWasteType = null;
+          _startPoint = null;
+          _endPoint = null;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Please fill all fields and select route points')),
+      );
     }
   }
 
@@ -88,21 +153,21 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting route: ${e.toString()}')),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
     }
   }
 
-  void _navigateToEditRoutePage(DocumentSnapshot route) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditRoutePage(
-          routeId: route.id,
-          routeData: route.data() as Map<String, dynamic>,
-        ),
-      ),
-    );
+  void _editRoute(DocumentSnapshot route) {
+    setState(() {
+      _startPoint =
+          LatLng(route['start_point'].latitude, route['start_point'].longitude);
+      _endPoint =
+          LatLng(route['end_point'].latitude, route['end_point'].longitude);
+      _startTimeController.text = route['start_time'];
+      _endTimeController.text = route['end_time'];
+      _selectedWasteType = route['waste_type'];
+    });
   }
 
   @override
@@ -119,26 +184,19 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
               key: _formKey,
               child: Column(
                 children: [
-                  TextFormField(
-                    controller: _startPointController,
-                    decoration: InputDecoration(labelText: 'Start Point'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a start point';
-                      }
-                      return null;
-                    },
+                  ElevatedButton(
+                    onPressed: _selectRoutePoints,
+                    child: Text('Select Route Points'),
                   ),
-                  TextFormField(
-                    controller: _endPointController,
-                    decoration: InputDecoration(labelText: 'End Point'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an end point';
-                      }
-                      return null;
-                    },
-                  ),
+                  if (_startPoint != null && _endPoint != null)
+                    Column(
+                      children: [
+                        Text(
+                            'Start Point: (${_startPoint!.latitude}, ${_startPoint!.longitude})'),
+                        Text(
+                            'End Point: (${_endPoint!.latitude}, ${_endPoint!.longitude})'),
+                      ],
+                    ),
                   TextFormField(
                     controller: _startTimeController,
                     readOnly: true,
@@ -182,61 +240,49 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _createRoute,
+                    onPressed: () => _createRoute(),
                     child: Text('Create Route'),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('garbage_routes')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  }
-                  if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  }
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('garbage_routes')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Center(child: CircularProgressIndicator());
+                      }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Text('No routes available');
-                  }
-
-                  return ListView.builder(
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      final route = snapshot.data!.docs[index];
-                      final routeData = route.data() as Map<String, dynamic>;
-                      return ListTile(
-                        title: Text(
-                            'ID: ${route.id}\nStart: ${routeData['start_point']} - End: ${routeData['end_point']}'),
-                        subtitle: routeData.containsKey('start_time') &&
-                                routeData.containsKey('end_time')
-                            ? Text(
-                                'Time: ${routeData['start_time']} - ${routeData['end_time']}\nWaste: ${routeData['waste_type']}')
-                            : Text(
-                                'Time: Not specified\nWaste: ${routeData['waste_type']}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () => _navigateToEditRoutePage(route),
+                      return ListView(
+                        shrinkWrap: true,
+                        children: snapshot.data!.docs.map((doc) {
+                          return ListTile(
+                            title: Text(
+                                'Route: (${doc['start_point'].latitude}, ${doc['start_point'].longitude}) to (${doc['end_point'].latitude}, ${doc['end_point'].longitude})'),
+                            subtitle: Text(
+                                'Time: ${doc['start_time']} - ${doc['end_time']}\nWaste Type: ${doc['waste_type']}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {
+                                    _editRoute(doc);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () {
+                                    _deleteRoute(doc.id);
+                                  },
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () => _deleteRoute(route.id),
-                            ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
                       );
                     },
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],
