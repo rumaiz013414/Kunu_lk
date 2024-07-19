@@ -22,49 +22,84 @@ class _LoginPageState extends State<LoginPage> {
           await _authService.signInWithEmailAndPassword(email, password);
       if (user != null) {
         if (!user.emailVerified) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please verify your email first.')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please verify your email first.')),
+            );
+          }
           return;
         }
         navigateBasedOnUserRole(user);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed. Please try again.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed. Please try again.')),
+        );
+      }
     }
   }
 
   void navigateBasedOnUserRole(User user) async {
-    final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-    final String role = userDoc['role'];
+    try {
+      final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-    switch (role) {
-      case 'customer':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => CustomerHomePage()),
+      if (userDoc.exists) {
+        final String? role = userDoc['role'];
+        print("User role: $role"); // Debug log
+
+        if (role != null) {
+          if (mounted) {
+            switch (role) {
+              case 'customer':
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => CustomerHomePage()),
+                );
+                break;
+              case 'garbage_collector':
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => GarbageCollectorHomePage()),
+                );
+                break;
+              case 'admin':
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => AdminHome()),
+                );
+                break;
+              default:
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Unknown role: $role')),
+                );
+                break;
+            }
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Role is null')),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('User document does not exist')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to get user role: $e')),
         );
-        break;
-      case 'garbage_collector':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => GarbageCollectorHomePage()),
-        );
-        break;
-      case 'admin':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => AdminHome()),
-        );
-        break;
-      default:
-        // Handle default case or error
-        break;
+      }
     }
   }
 

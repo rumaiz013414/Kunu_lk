@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth to get the current user
-import 'payment_portal.dart'; // Import your payment_portal.dart file here
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/route_details.dart';
+import 'payment_portal.dart';
 
 class SubscribeScreen extends StatefulWidget {
   @override
@@ -16,6 +17,8 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
   Position? _currentPosition;
+  Map<String, Map<String, dynamic>> _routeDetails = {};
+  final String _apiKey = "AIzaSyBmwKB0_BzuuI4gTjWsYruUKBWTWy7Cozw";
 
   void _toggleRouteSelection(String routeId, GeoPoint start, GeoPoint end) {
     setState(() {
@@ -26,6 +29,7 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
         if (_selectedRoutes.length < 3) {
           _selectedRoutes.add(routeId);
           _addMarkersAndPolyline(routeId, start, end);
+          _fetchAndStoreRouteDetails(routeId, start, end);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('You can only select up to 3 routes')),
@@ -78,6 +82,7 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
         marker.markerId.value == 'start_$routeId' ||
         marker.markerId.value == 'end_$routeId');
     _polylines.removeWhere((polyline) => polyline.polylineId.value == routeId);
+    _routeDetails.remove(routeId);
   }
 
   Future<Position> _determinePosition() async {
@@ -105,13 +110,18 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
     return await Geolocator.getCurrentPosition();
   }
 
+  Future<void> _fetchAndStoreRouteDetails(
+      String routeId, GeoPoint start, GeoPoint end) async {
+    Map<String, dynamic> routeDetails =
+        await getRouteDetails(start, end, _apiKey);
+
+    setState(() {
+      _routeDetails[routeId] = routeDetails;
+    });
+  }
+
   void _subscribe(BuildContext context) async {
     if (_selectedRoutes.length == 3) {
-      print('Subscribed to routes:');
-      _selectedRoutes.forEach((routeId) {
-        print('Route ID: $routeId');
-      });
-
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         await FirebaseFirestore.instance
@@ -208,12 +218,10 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
   @override
   void initState() {
     super.initState();
-    _findClosestRoutes();
     _determinePosition().then((position) {
       setState(() {
         _currentPosition = position;
 
-        // Add a marker for the user's current location
         _markers.add(Marker(
           markerId: MarkerId('current_location'),
           position: LatLng(position.latitude, position.longitude),
@@ -290,15 +298,45 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
                                 route.data() as Map<String, dynamic>;
                             final routeId = route.id;
 
+                            String startAddress = _routeDetails[routeId]
+                                    ?['start_address'] ??
+                                'Fetching...';
+                            String endAddress = _routeDetails[routeId]
+                                    ?['end_address'] ??
+                                'Fetching...';
+                            List<dynamic> steps =
+                                _routeDetails[routeId]?['steps'] ?? [];
+
                             return ListTile(
                               title: Text(
-                                  'ID: $routeId\nStart: ${routeData['start_point']} - End: ${routeData['end_point']}'),
+                                  'ID: $routeId\nStart: $startAddress - End: $endAddress'),
                               subtitle: routeData.containsKey('start_time') &&
                                       routeData.containsKey('end_time')
-                                  ? Text(
-                                      'Time: ${routeData['start_time']} - ${routeData['end_time']}\nWaste: ${routeData['waste_type']}')
-                                  : Text(
-                                      'Time: Not specified\nWaste: ${routeData['waste_type']}'),
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                            'Time: ${routeData['start_time']} - ${routeData['end_time']}'),
+                                        Text(
+                                            'Waste: ${routeData['waste_type']}'),
+                                        ...steps
+                                            .map((step) => Text(step))
+                                            .toList(),
+                                      ],
+                                    )
+                                  : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Time: Not specified'),
+                                        Text(
+                                            'Waste: ${routeData['waste_type']}'),
+                                        ...steps
+                                            .map((step) => Text(step))
+                                            .toList(),
+                                      ],
+                                    ),
                               trailing: Checkbox(
                                 value: _selectedRoutes.contains(routeId),
                                 onChanged: (value) => _toggleRouteSelection(

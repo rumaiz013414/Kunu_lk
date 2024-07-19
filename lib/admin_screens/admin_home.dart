@@ -4,6 +4,8 @@ import './view_customers.dart'; // Placeholder for the manage customers page
 import './view_garbage_collectors.dart'; // Placeholder for the manage garbage collectors page
 
 class AdminHome extends StatelessWidget {
+  const AdminHome({super.key});
+
   void _logout(BuildContext context) {
     // Implement your logout functionality here
     // For example, you might want to clear user data and navigate to the login page
