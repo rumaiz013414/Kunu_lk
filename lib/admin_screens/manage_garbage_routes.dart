@@ -176,116 +176,126 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
       appBar: AppBar(
         title: Text('Manage Garbage Collection Routes'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: _selectRoutePoints,
-                    child: Text('Select Route Points'),
-                  ),
-                  if (_startPoint != null && _endPoint != null)
-                    Column(
-                      children: [
-                        Text(
-                            'Start Point: (${_startPoint!.latitude}, ${_startPoint!.longitude})'),
-                        Text(
-                            'End Point: (${_endPoint!.latitude}, ${_endPoint!.longitude})'),
-                      ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _selectRoutePoints,
+                      child: Text('Select Route Points'),
                     ),
-                  TextFormField(
-                    controller: _startTimeController,
-                    readOnly: true,
-                    decoration: InputDecoration(labelText: 'Start Time'),
-                    onTap: () => _selectTime(context, _startTimeController),
-                  ),
-                  TextFormField(
-                    controller: _endTimeController,
-                    readOnly: true,
-                    decoration: InputDecoration(labelText: 'End Time'),
-                    onTap: () => _selectTime(context, _endTimeController),
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: _selectedWasteType,
-                    decoration: InputDecoration(labelText: 'Waste Type'),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'Electronics',
-                        child: Text('Electronics'),
+                    if (_startPoint != null && _endPoint != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              'Start Point: (${_startPoint!.latitude}, ${_startPoint!.longitude})'),
+                          Text(
+                              'End Point: (${_endPoint!.latitude}, ${_endPoint!.longitude})'),
+                        ],
                       ),
-                      DropdownMenuItem(
-                        value: 'Plastics',
-                        child: Text('Plastics'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Paper',
-                        child: Text('Paper'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedWasteType = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a waste type';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => _createRoute(),
-                    child: Text('Create Route'),
-                  ),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('garbage_routes')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-
-                      return ListView(
-                        shrinkWrap: true,
-                        children: snapshot.data!.docs.map((doc) {
-                          return ListTile(
-                            title: Text(
-                                'Route: (${doc['start_point'].latitude}, ${doc['start_point'].longitude}) to (${doc['end_point'].latitude}, ${doc['end_point'].longitude})'),
-                            subtitle: Text(
-                                'Time: ${doc['start_time']} - ${doc['end_time']}\nWaste Type: ${doc['waste_type']}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit),
-                                  onPressed: () {
-                                    _editRoute(doc);
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete),
-                                  onPressed: () {
-                                    _deleteRoute(doc.id);
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ],
+                    TextFormField(
+                      controller: _startTimeController,
+                      readOnly: true,
+                      decoration: InputDecoration(labelText: 'Start Time'),
+                      onTap: () => _selectTime(context, _startTimeController),
+                    ),
+                    TextFormField(
+                      controller: _endTimeController,
+                      readOnly: true,
+                      decoration: InputDecoration(labelText: 'End Time'),
+                      onTap: () => _selectTime(context, _endTimeController),
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: _selectedWasteType,
+                      decoration: InputDecoration(labelText: 'Waste Type'),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'Electronics',
+                          child: Text('Electronics'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Plastics',
+                          child: Text('Plastics'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Paper',
+                          child: Text('Paper'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedWasteType = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please select a waste type';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => _createRoute(),
+                      child: Text('Create Route'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 20),
+              Text(
+                'Existing Routes',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('garbage_routes')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  return ListView(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    children: snapshot.data!.docs.map((doc) {
+                      return ListTile(
+                        title: Text(
+                            'Route: (${doc['start_point'].latitude}, ${doc['start_point'].longitude}) to (${doc['end_point'].latitude}, ${doc['end_point'].longitude})'),
+                        subtitle: Text(
+                            'Time: ${doc['start_time']} - ${doc['end_time']}\nWaste Type: ${doc['waste_type']}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit),
+                              onPressed: () {
+                                _editRoute(doc);
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () {
+                                _deleteRoute(doc.id);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
