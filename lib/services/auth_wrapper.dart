@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../authentication_screens/login_screen.dart';
-import '../customer_screens/customer_home.dart'; // Import your home screens for different roles
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../garbage_collector_screens/garbage_collector_home.dart';
-import '../admin_screens/admin_home.dart';
+import '../customer_screens/customer_home.dart';
+import '../authentication_screens/login_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   @override
@@ -13,52 +12,82 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasData) {
-          return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance
-                .collection('users')
-                .doc(snapshot.data!.uid)
-                .get(),
-            builder: (context, userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
-                return Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (userSnapshot.hasError) {
-                return Scaffold(
-                  body: Center(child: Text('Error: ${userSnapshot.error}')),
-                );
-              }
-              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                return Scaffold(
-                  body: Center(child: Text('User data not found')),
-                );
-              }
 
-              final String role = userSnapshot.data!['role'];
-              switch (role) {
-                case 'customer':
-                  return CustomerHomePage();
-                case 'garbage_collector':
-                  return GarbageCollectorHomePage();
-                case 'admin':
-                  return AdminHome();
-                default:
-                  return Scaffold(
-                    body: Center(child: Text('Unknown role')),
-                  );
-              }
-            },
-          );
-        } else {
-          return LoginPage();
+        if (snapshot.hasData) {
+          User? user = snapshot.data;
+          if (user != null) {
+            // Ensure the collector's document exists
+            ensureCollectorDocumentExists(user);
+
+            return FutureBuilder<String?>(
+              future: getUserRole(user),
+              builder: (context, roleSnapshot) {
+                if (roleSnapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                if (roleSnapshot.hasData) {
+                  String? role = roleSnapshot.data;
+
+                  if (role == 'customer') {
+                    return CustomerHomePage();
+                  } else if (role == 'garbage_collector') {
+                    return GarbageCollectorHomePage();
+                  } else {
+                    return Center(child: Text('Unknown role'));
+                  }
+                } else if (roleSnapshot.hasError) {
+                  return Center(child: Text('Error: ${roleSnapshot.error}'));
+                }
+
+                return Center(child: Text('No role assigned'));
+              },
+            );
+          }
         }
+
+        return LoginPage();
       },
     );
+  }
+
+  Future<void> ensureCollectorDocumentExists(User user) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('garbage_collectors')
+        .doc(user.uid);
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      await docRef.set({
+        'collector_city': '',
+        'collector_postal_code': '',
+        'created_at': Timestamp.now(),
+        'email': user.email,
+        'name': '',
+        'nic_no': '',
+        'phone_number': '',
+        'postal_code': '',
+        'profilePicture': '',
+        'role': 'garbage_collector',
+        'vehicle_details': '',
+        'verified': false,
+        'location': GeoPoint(0, 0), // Default location
+        'assigned_routes': [],
+      });
+    }
+  }
+
+  Future<String?> getUserRole(User user) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return doc.data()?['role'] as String?;
+    } catch (e) {
+      print('Error fetching user role: $e');
+      return null;
+    }
   }
 }

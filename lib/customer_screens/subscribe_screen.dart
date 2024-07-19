@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth to get the current user
 import 'payment_portal.dart'; // Import your payment_portal.dart file here
 
 class SubscribeScreen extends StatefulWidget {
@@ -111,6 +112,14 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
         print('Route ID: $routeId');
       });
 
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'subscribed_routes': _selectedRoutes});
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -203,7 +212,20 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
     _determinePosition().then((position) {
       setState(() {
         _currentPosition = position;
+
+        // Add a marker for the user's current location
+        _markers.add(Marker(
+          markerId: MarkerId('current_location'),
+          position: LatLng(position.latitude, position.longitude),
+          infoWindow: InfoWindow(title: 'Your Location'),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        ));
       });
+
+      _mapController?.animateCamera(CameraUpdate.newLatLng(
+        LatLng(position.latitude, position.longitude),
+      ));
     });
     _addRouteMarkers();
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:testing/customer_screens/customer_profile/customer_profile_details.dart';
 import 'package:testing/customer_screens/customer_profile/customer_profile_photo.dart';
 import 'package:testing/garbage_collector_screens/garbage_collector_profile/garbage_profile_details.dart';
+import 'package:testing/garbage_collector_screens/garbage_collection_routes.dart';
 import 'authentication_screens/login_screen.dart';
 import 'authentication_screens/registration_screen.dart';
 import 'authentication_screens/password_reset_screen.dart';
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Your App',
+      title: 'Kunu.Lk',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/garbageCollectorInfoForm': (context) => GarbageCollectorInfoFormPage(
               user: ModalRoute.of(context)!.settings.arguments as User,
             ),
+        '/garbageCollectionRoutes': (context) => GarbageCollectionRoutes(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/customerInfoForm') {
