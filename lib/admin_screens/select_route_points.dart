@@ -6,6 +6,7 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 
 const kGoogleApiKey = "AIzaSyBmwKB0_BzuuI4gTjWsYruUKBWTWy7Cozw";
 
@@ -23,12 +24,14 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
   bool _selectingStart = true;
   final TextEditingController _searchController = TextEditingController();
   Set<Polyline> _polylines = {};
+  Set<Marker> _markers = {};
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
+    _fetchCustomerLocations(); // Fetch customer locations on init
   }
 
   Future<void> _checkLocationPermission() async {
@@ -37,6 +40,49 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
           desiredAccuracy: LocationAccuracy.high);
       _controller?.animateCamera(CameraUpdate.newLatLng(
           LatLng(position.latitude, position.longitude)));
+    }
+  }
+
+  Future<void> _fetchCustomerLocations() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+
+      Set<Marker> markers = {};
+
+      for (var doc in snapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        if (data.containsKey('current_location')) {
+          var location = data['current_location'];
+          var lat = location['latitude'];
+          var lng = location['longitude'];
+
+          markers.add(Marker(
+            markerId: MarkerId(doc.id),
+            position: LatLng(lat, lng),
+            infoWindow: InfoWindow(
+              title: doc.id,
+              snippet: 'Lat: $lat, Lng: $lng',
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueGreen),
+          ));
+        }
+      }
+
+      setState(() {
+        _markers = markers;
+      });
+    } catch (e) {
+      print("Error fetching customer locations: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -229,7 +275,7 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
                     zoom: 12,
                   ),
                   onTap: _onTap,
-                  markers: {
+                  markers: _markers.union({
                     if (_startPoint != null)
                       Marker(
                         markerId: MarkerId('start'),
@@ -242,7 +288,7 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
                         position: _endPoint!,
                         infoWindow: InfoWindow(title: 'End Point'),
                       ),
-                  },
+                  }),
                   polylines: _polylines,
                 ),
               ),

@@ -188,7 +188,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                   children: [
                     ElevatedButton(
                       onPressed: _selectRoutePoints,
-                      child: Text('Select Route Points'),
+                      child: Text('Click here to Select Route Points'),
                     ),
                     if (_startPoint != null && _endPoint != null)
                       Column(
@@ -203,18 +203,21 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                     TextFormField(
                       controller: _startTimeController,
                       readOnly: true,
-                      decoration: InputDecoration(labelText: 'Start Time'),
+                      decoration: InputDecoration(
+                          labelText: 'Add a estimated Start Time'),
                       onTap: () => _selectTime(context, _startTimeController),
                     ),
                     TextFormField(
                       controller: _endTimeController,
                       readOnly: true,
-                      decoration: InputDecoration(labelText: 'End Time'),
+                      decoration: InputDecoration(
+                          labelText: 'Add a estimated End Time'),
                       onTap: () => _selectTime(context, _endTimeController),
                     ),
                     DropdownButtonFormField<String>(
                       value: _selectedWasteType,
-                      decoration: InputDecoration(labelText: 'Waste Type'),
+                      decoration:
+                          InputDecoration(labelText: 'select the Waste Type'),
                       items: [
                         DropdownMenuItem(
                           value: 'Electronics',
@@ -244,14 +247,14 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                     SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => _createRoute(),
-                      child: Text('Create Route'),
+                      child: Text('Click Here to Create the Route'),
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 20),
               Text(
-                'Existing Routes',
+                'Available Routes',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               StreamBuilder<QuerySnapshot>(

@@ -20,6 +20,69 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
   Map<String, Map<String, dynamic>> _routeDetails = {};
   final String _apiKey = "AIzaSyBmwKB0_BzuuI4gTjWsYruUKBWTWy7Cozw";
 
+  @override
+  void initState() {
+    super.initState();
+    _determinePosition().then((position) {
+      setState(() {
+        _currentPosition = position;
+
+        _markers.add(Marker(
+          markerId: MarkerId('current_location'),
+          position: LatLng(position.latitude, position.longitude),
+          infoWindow: InfoWindow(title: 'Your Location'),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        ));
+      });
+
+      _mapController?.animateCamera(CameraUpdate.newLatLng(
+        LatLng(position.latitude, position.longitude),
+      ));
+    });
+    _addRouteMarkers();
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  Future<void> _saveLocationToDatabase(Position position) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'current_location': {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        },
+      });
+    }
+  }
+
   void _toggleRouteSelection(String routeId, GeoPoint start, GeoPoint end) {
     setState(() {
       if (_selectedRoutes.contains(routeId)) {
@@ -83,31 +146,6 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
         marker.markerId.value == 'end_$routeId');
     _polylines.removeWhere((polyline) => polyline.polylineId.value == routeId);
     _routeDetails.remove(routeId);
-  }
-
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition();
   }
 
   Future<void> _fetchAndStoreRouteDetails(
@@ -215,27 +253,21 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _determinePosition().then((position) {
-      setState(() {
-        _currentPosition = position;
-
-        _markers.add(Marker(
-          markerId: MarkerId('current_location'),
-          position: LatLng(position.latitude, position.longitude),
-          infoWindow: InfoWindow(title: 'Your Location'),
-          icon:
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        ));
-      });
-
+  void _centerOnCurrentLocation() async {
+    try {
+      Position position = await _determinePosition();
       _mapController?.animateCamera(CameraUpdate.newLatLng(
         LatLng(position.latitude, position.longitude),
       ));
-    });
-    _addRouteMarkers();
+      await _saveLocationToDatabase(position);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location saved to database')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to get current location: $e')),
+      );
+    }
   }
 
   @override
@@ -365,6 +397,10 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _centerOnCurrentLocation,
+        child: Icon(Icons.my_location),
       ),
     );
   }

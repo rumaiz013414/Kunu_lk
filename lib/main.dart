@@ -9,7 +9,7 @@ import 'authentication_screens/login_screen.dart';
 import 'authentication_screens/registration_screen.dart';
 import 'authentication_screens/password_reset_screen.dart';
 import 'customer_screens/customer_home.dart';
-import 'garbage_collector_screens/garbage_collector_information_form.dart';
+import 'garbage_collector_screens/get_garbage_collector_information_form.dart';
 import 'garbage_collector_screens/garbage_collector_home.dart';
 import 'admin_screens/admin_home.dart';
 import 'customer_screens/customer_info_form.dart';
