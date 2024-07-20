@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../garbage_collector_screens/garbage_collector_home.dart';
-import '../customer_screens/customer_home.dart';
+import '../customer_screens/customer_home_routes.dart';
 import '../admin_screens/admin_home.dart';
 import '../authentication_screens/login_screen.dart';
 

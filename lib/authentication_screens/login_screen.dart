@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
-import '../customer_screens/customer_home.dart'; // Import your home screens for different roles
+import '../customer_screens/customer_home_routes.dart'; // Import your home screens for different roles
 import '../garbage_collector_screens/garbage_collector_home.dart';
 import '../admin_screens/admin_home.dart';
 

@@ -55,11 +55,50 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
         var routePoints = (data['route_points'] as List)
             .map((point) => LatLng(point['latitude'], point['longitude']))
             .toList();
+        var wasteType = data['waste_type'];
 
+        Color routeColor;
+        BitmapDescriptor routeIcon;
+        switch (wasteType) {
+          case 'Electronics':
+            routeColor = Colors.red;
+            routeIcon = BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueViolet);
+            break;
+          case 'Plastics':
+            routeColor = Colors.black;
+            routeIcon =
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan);
+            break;
+          case 'Paper':
+            routeColor = Colors.green;
+            routeIcon = BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueGreen);
+            break;
+          default:
+            routeColor = Colors.grey;
+            routeIcon = BitmapDescriptor.defaultMarker;
+            break;
+        }
+
+        // Create markers for each route point
+        for (var point in routePoints) {
+          _markers.add(Marker(
+            markerId:
+                MarkerId('${doc.id}_${point.latitude}_${point.longitude}'),
+            position: point,
+            icon: routeIcon,
+            infoWindow: InfoWindow(
+              title: '$wasteType Route Point',
+            ),
+          ));
+        }
+
+        // Create a polyline for the route
         _polylines.add(Polyline(
           polylineId: PolylineId(doc.id),
           points: routePoints,
-          color: Colors.blue,
+          color: routeColor,
           width: 5,
         ));
       }
@@ -67,6 +106,9 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
       setState(() {
         _findClosestRoute();
       });
+
+      // Adjust the camera to fit all markers and polylines
+      _fitCameraToBounds();
     } catch (e) {
       print("Error fetching routes: $e");
     } finally {
@@ -76,10 +118,18 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
     }
   }
 
+  void _fitCameraToBounds() {
+    if (_markers.isEmpty) return;
+
+    LatLngBounds bounds =
+        _getLatLngBounds(_markers.map((m) => m.position).toList());
+    _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+  }
+
   void _findClosestRoute() {
     if (_customerLocation == null || _polylines.isEmpty) return;
 
-    double minDistance = 200; // 200 meters
+    double minDistance = 100; // 100 meters
     Polyline? closestRoute;
 
     for (var polyline in _polylines) {
@@ -110,11 +160,11 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
         50,
       ));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Found the closest route within 200 meters')),
+        SnackBar(content: Text('Found the closest route within 100 meters')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No route found within 200 meters')),
+        SnackBar(content: Text('No route found within 100 meters')),
       );
     }
   }
@@ -140,13 +190,15 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _controller = controller;
+    // Adjust the camera to fit all markers and polylines when the map is created
+    _fitCameraToBounds();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('View Garbage Collection Routes'),
+        title: Text('Your Garbage Collection Points and Routes'),
       ),
       body: Stack(
         children: [
@@ -154,7 +206,7 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
               target: LatLng(37.7749, -122.4194), // Default to San Francisco
-              zoom: 12,
+              zoom: 18, // Increased zoom level for a more zoomed-in view
             ),
             markers: _markers,
             polylines: _polylines,
