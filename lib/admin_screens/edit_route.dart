@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+
+import 'select_route_points.dart';
 
 class EditRoutePage extends StatefulWidget {
   final String routeId;
@@ -14,30 +17,28 @@ class EditRoutePage extends StatefulWidget {
 
 class _EditRoutePageState extends State<EditRoutePage> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _startPointController;
-  late TextEditingController _endPointController;
   late TextEditingController _startTimeController;
   late TextEditingController _endTimeController;
   String? _selectedWasteType;
+  List<LatLng> _routePoints = [];
 
   @override
   void initState() {
     super.initState();
-    _startPointController =
-        TextEditingController(text: widget.routeData['start_point']);
-    _endPointController =
-        TextEditingController(text: widget.routeData['end_point']);
     _startTimeController =
         TextEditingController(text: widget.routeData['start_time']);
     _endTimeController =
         TextEditingController(text: widget.routeData['end_time']);
     _selectedWasteType = widget.routeData['waste_type'];
+
+    // Convert the points from GeoPoint to LatLng
+    var points = widget.routeData['points'] as List<dynamic>;
+    _routePoints =
+        points.map((p) => LatLng(p['latitude'], p['longitude'])).toList();
   }
 
   @override
   void dispose() {
-    _startPointController.dispose();
-    _endPointController.dispose();
     _startTimeController.dispose();
     _endTimeController.dispose();
     super.dispose();
@@ -59,8 +60,6 @@ class _EditRoutePageState extends State<EditRoutePage> {
 
   void _updateRoute() async {
     if (_formKey.currentState!.validate()) {
-      String startPoint = _startPointController.text.trim();
-      String endPoint = _endPointController.text.trim();
       String startTime = _startTimeController.text.trim();
       String endTime = _endTimeController.text.trim();
       String wasteType = _selectedWasteType!;
@@ -70,11 +69,13 @@ class _EditRoutePageState extends State<EditRoutePage> {
             .collection('garbage_routes')
             .doc(widget.routeId)
             .update({
-          'start_point': startPoint,
-          'end_point': endPoint,
+          'points': _routePoints
+              .map((p) => {'latitude': p.latitude, 'longitude': p.longitude})
+              .toList(),
           'start_time': startTime,
           'end_time': endTime,
           'waste_type': wasteType,
+          'updated_at': Timestamp.now(),
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +91,19 @@ class _EditRoutePageState extends State<EditRoutePage> {
     }
   }
 
+  Future<void> _selectRoutePoints() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SelectRoutePointsPage()),
+    );
+
+    if (result != null && result['route_points'] != null) {
+      setState(() {
+        _routePoints = result['route_points'];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,26 +116,21 @@ class _EditRoutePageState extends State<EditRoutePage> {
           key: _formKey,
           child: Column(
             children: [
-              TextFormField(
-                controller: _startPointController,
-                decoration: InputDecoration(labelText: 'Start Point'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a start point';
-                  }
-                  return null;
-                },
+              ElevatedButton(
+                onPressed: _selectRoutePoints,
+                child: Text('Select Route Points'),
               ),
-              TextFormField(
-                controller: _endPointController,
-                decoration: InputDecoration(labelText: 'End Point'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an end point';
-                  }
-                  return null;
-                },
-              ),
+              if (_routePoints.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Route Points:'),
+                    ..._routePoints
+                        .map((point) =>
+                            Text('(${point.latitude}, ${point.longitude})'))
+                        .toList(),
+                  ],
+                ),
               TextFormField(
                 controller: _startTimeController,
                 readOnly: true,

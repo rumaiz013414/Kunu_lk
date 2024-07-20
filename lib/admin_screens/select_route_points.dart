@@ -4,8 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 
 const kGoogleApiKey = "AIzaSyBmwKB0_BzuuI4gTjWsYruUKBWTWy7Cozw";
@@ -19,9 +17,7 @@ class SelectRoutePointsPage extends StatefulWidget {
 
 class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
   GoogleMapController? _controller;
-  LatLng? _startPoint;
-  LatLng? _endPoint;
-  bool _selectingStart = true;
+  List<LatLng> _routePoints = [];
   final TextEditingController _searchController = TextEditingController();
   Set<Polyline> _polylines = {};
   Set<Marker> _markers = {};
@@ -92,22 +88,45 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
 
   void _onTap(LatLng position) {
     setState(() {
-      if (_selectingStart) {
-        _startPoint = position;
-      } else {
-        _endPoint = position;
-        _showRoute();
-      }
-      _selectingStart = !_selectingStart;
+      _routePoints.add(position);
+      _updatePolyline();
     });
   }
 
-  void _saveRoutePoints() {
-    if (_startPoint != null && _endPoint != null) {
-      Navigator.pop(context, {'start': _startPoint, 'end': _endPoint});
+  void _updatePolyline() {
+    setState(() {
+      _polylines = {
+        Polyline(
+          polylineId: PolylineId('custom_route'),
+          points: _routePoints,
+          color: Colors.blue,
+          width: 5,
+        ),
+      };
+    });
+  }
+
+  Future<void> _saveRoutePoints() async {
+    if (_routePoints.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance.collection('routes').add({
+          'points': _routePoints
+              .map((point) =>
+                  {'latitude': point.latitude, 'longitude': point.longitude})
+              .toList(),
+          'created_at': FieldValue.serverTimestamp(),
+        });
+
+        Navigator.pop(context, {'route_points': _routePoints});
+      } catch (e) {
+        print("Error saving route: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save the route')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select both start and end points')),
+        SnackBar(content: Text('Please select points to draw the route')),
       );
     }
   }
@@ -143,96 +162,6 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _showRoute() async {
-    if (_startPoint != null && _endPoint != null) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        String url = 'https://maps.googleapis.com/maps/api/directions/json?'
-            'origin=${_startPoint!.latitude},${_startPoint!.longitude}&'
-            'destination=${_endPoint!.latitude},${_endPoint!.longitude}&'
-            'key=$kGoogleApiKey';
-
-        final response = await http.get(Uri.parse(url));
-        if (response.statusCode == 200) {
-          final json = jsonDecode(response.body);
-          final route = json['routes'][0]['overview_polyline']['points'];
-          final polyline = Polyline(
-            polylineId: PolylineId('route'),
-            points: _decodePolyline(route),
-            color: Colors.blue,
-            width: 5,
-          );
-
-          setState(() {
-            _polylines = {polyline};
-          });
-
-          _controller?.animateCamera(
-            CameraUpdate.newLatLngBounds(
-              _createLatLngBounds(_startPoint!, _endPoint!),
-              50,
-            ),
-          );
-        } else {
-          print("Failed to load route: ${response.statusCode}");
-        }
-      } catch (e) {
-        print("Error occurred while fetching route: $e");
-      } finally {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  List<LatLng> _decodePolyline(String polyline) {
-    List<LatLng> points = [];
-    int index = 0, len = polyline.length;
-    int lat = 0, lng = 0;
-
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = polyline.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-      do {
-        b = polyline.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
-
-      points.add(LatLng((lat / 1E5), (lng / 1E5)));
-    }
-
-    return points;
-  }
-
-  LatLngBounds _createLatLngBounds(LatLng start, LatLng end) {
-    return LatLngBounds(
-      southwest: LatLng(
-        start.latitude < end.latitude ? start.latitude : end.latitude,
-        start.longitude < end.longitude ? start.longitude : end.longitude,
-      ),
-      northeast: LatLng(
-        start.latitude > end.latitude ? start.latitude : end.latitude,
-        start.longitude > end.longitude ? start.longitude : end.longitude,
-      ),
-    );
   }
 
   @override
@@ -276,18 +205,10 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
                   ),
                   onTap: _onTap,
                   markers: _markers.union({
-                    if (_startPoint != null)
-                      Marker(
-                        markerId: MarkerId('start'),
-                        position: _startPoint!,
-                        infoWindow: InfoWindow(title: 'Start Point'),
-                      ),
-                    if (_endPoint != null)
-                      Marker(
-                        markerId: MarkerId('end'),
-                        position: _endPoint!,
-                        infoWindow: InfoWindow(title: 'End Point'),
-                      ),
+                    ..._routePoints.map((point) => Marker(
+                          markerId: MarkerId(point.toString()),
+                          position: point,
+                        )),
                   }),
                   polylines: _polylines,
                 ),

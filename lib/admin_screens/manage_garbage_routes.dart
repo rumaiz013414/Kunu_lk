@@ -15,8 +15,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
   String? _selectedWasteType;
-  LatLng? _startPoint;
-  LatLng? _endPoint;
+  List<LatLng> _routePoints = [];
 
   @override
   void dispose() {
@@ -47,25 +46,23 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
 
     if (result != null) {
       setState(() {
-        _startPoint = result['start'];
-        _endPoint = result['end'];
+        _routePoints = List<LatLng>.from(result['route_points']);
       });
     }
   }
 
   void _createRoute() async {
-    if (_formKey.currentState!.validate() &&
-        _startPoint != null &&
-        _endPoint != null) {
+    if (_formKey.currentState!.validate() && _routePoints.isNotEmpty) {
       String startTime = _startTimeController.text.trim();
       String endTime = _endTimeController.text.trim();
       String wasteType = _selectedWasteType!;
 
       try {
         await FirebaseFirestore.instance.collection('garbage_routes').add({
-          'start_point':
-              GeoPoint(_startPoint!.latitude, _startPoint!.longitude),
-          'end_point': GeoPoint(_endPoint!.latitude, _endPoint!.longitude),
+          'route_points': _routePoints
+              .map((point) =>
+                  {'latitude': point.latitude, 'longitude': point.longitude})
+              .toList(),
           'start_time': startTime,
           'end_time': endTime,
           'waste_type': wasteType,
@@ -80,8 +77,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
         _endTimeController.clear();
         setState(() {
           _selectedWasteType = null;
-          _startPoint = null;
-          _endPoint = null;
+          _routePoints = [];
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,9 +93,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
   }
 
   void _updateRoute(String routeId) async {
-    if (_formKey.currentState!.validate() &&
-        _startPoint != null &&
-        _endPoint != null) {
+    if (_formKey.currentState!.validate() && _routePoints.isNotEmpty) {
       String startTime = _startTimeController.text.trim();
       String endTime = _endTimeController.text.trim();
       String wasteType = _selectedWasteType!;
@@ -109,9 +103,10 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
             .collection('garbage_routes')
             .doc(routeId)
             .update({
-          'start_point':
-              GeoPoint(_startPoint!.latitude, _startPoint!.longitude),
-          'end_point': GeoPoint(_endPoint!.latitude, _endPoint!.longitude),
+          'route_points': _routePoints
+              .map((point) =>
+                  {'latitude': point.latitude, 'longitude': point.longitude})
+              .toList(),
           'start_time': startTime,
           'end_time': endTime,
           'waste_type': wasteType,
@@ -126,8 +121,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
         _endTimeController.clear();
         setState(() {
           _selectedWasteType = null;
-          _startPoint = null;
-          _endPoint = null;
+          _routePoints = [];
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -160,10 +154,9 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
 
   void _editRoute(DocumentSnapshot route) {
     setState(() {
-      _startPoint =
-          LatLng(route['start_point'].latitude, route['start_point'].longitude);
-      _endPoint =
-          LatLng(route['end_point'].latitude, route['end_point'].longitude);
+      _routePoints = (route['route_points'] as List)
+          .map((point) => LatLng(point['latitude'], point['longitude']))
+          .toList();
       _startTimeController.text = route['start_time'];
       _endTimeController.text = route['end_time'];
       _selectedWasteType = route['waste_type'];
@@ -188,36 +181,34 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                   children: [
                     ElevatedButton(
                       onPressed: _selectRoutePoints,
-                      child: Text('Click here to Select Route Points'),
+                      child: Text('Select Route Points'),
                     ),
-                    if (_startPoint != null && _endPoint != null)
+                    if (_routePoints.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                              'Start Point: (${_startPoint!.latitude}, ${_startPoint!.longitude})'),
-                          Text(
-                              'End Point: (${_endPoint!.latitude}, ${_endPoint!.longitude})'),
+                          Text('Selected Route Points:'),
+                          ..._routePoints.map((point) =>
+                              Text('(${point.latitude}, ${point.longitude})')),
                         ],
                       ),
                     TextFormField(
                       controller: _startTimeController,
                       readOnly: true,
-                      decoration: InputDecoration(
-                          labelText: 'Add a estimated Start Time'),
+                      decoration:
+                          InputDecoration(labelText: 'Estimated Start Time'),
                       onTap: () => _selectTime(context, _startTimeController),
                     ),
                     TextFormField(
                       controller: _endTimeController,
                       readOnly: true,
-                      decoration: InputDecoration(
-                          labelText: 'Add a estimated End Time'),
+                      decoration:
+                          InputDecoration(labelText: 'Estimated End Time'),
                       onTap: () => _selectTime(context, _endTimeController),
                     ),
                     DropdownButtonFormField<String>(
                       value: _selectedWasteType,
-                      decoration:
-                          InputDecoration(labelText: 'select the Waste Type'),
+                      decoration: InputDecoration(labelText: 'Waste Type'),
                       items: [
                         DropdownMenuItem(
                           value: 'Electronics',
@@ -246,8 +237,8 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                     ),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () => _createRoute(),
-                      child: Text('Click Here to Create the Route'),
+                      onPressed: _createRoute,
+                      child: Text('Create Route'),
                     ),
                   ],
                 ),
@@ -272,7 +263,7 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                     children: snapshot.data!.docs.map((doc) {
                       return ListTile(
                         title: Text(
-                            'Route: (${doc['start_point'].latitude}, ${doc['start_point'].longitude}) to (${doc['end_point'].latitude}, ${doc['end_point'].longitude})'),
+                            'Route: (${doc['route_points'][0]['latitude']}, ${doc['route_points'][0]['longitude']}) to (${doc['route_points'].last['latitude']}, ${doc['route_points'].last['longitude']})'),
                         subtitle: Text(
                             'Time: ${doc['start_time']} - ${doc['end_time']}\nWaste Type: ${doc['waste_type']}'),
                         trailing: Row(

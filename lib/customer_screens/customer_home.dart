@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'customer_profile/customer_profile_details.dart';
-import './subscribe_screen.dart';
+import 'change_routes.dart';
 import './home_page.dart'; // Ensure you have the HomePage widget created
 
 class CustomerHomePage extends StatefulWidget {
@@ -59,7 +59,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
       _subscribedRoutes = routes;
       _widgetOptions = <Widget>[
         HomePage(subscribedRoutes: _subscribedRoutes),
-        SubscribeScreen(),
+        CustomerRoutesPage(),
         CustomerProfileDetails(),
       ];
     });
@@ -86,8 +86,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Subscribe',
+            icon: Icon(Icons.route),
+            label: 'Change Route',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

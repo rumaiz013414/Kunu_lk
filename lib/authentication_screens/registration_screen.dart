@@ -13,9 +13,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String email = '';
   String password = '';
+  String confirmPassword = '';
   String role = 'customer';
 
   void registerUser() async {
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Passwords do not match.')),
+      );
+      return;
+    }
+
     try {
       User? user =
           await _authService.registerWithEmailAndPassword(email, password);
@@ -75,12 +83,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 email = value;
               },
               decoration: InputDecoration(hintText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
             TextField(
               onChanged: (value) {
                 password = value;
               },
               decoration: InputDecoration(hintText: 'Password'),
+              obscureText: true,
+            ),
+            TextField(
+              onChanged: (value) {
+                confirmPassword = value;
+              },
+              decoration: InputDecoration(hintText: 'Confirm Password'),
               obscureText: true,
             ),
             DropdownButton<String>(
