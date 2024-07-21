@@ -17,9 +17,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
   String role = 'customer';
 
   void registerUser() async {
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('All fields are required.')),
+      );
+      return;
+    }
+
+    final passwordRegex = RegExp(r'^(?=.*[A-Z]).{8,}$');
+
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Passwords do not match.')),
+      );
+      return;
+    }
+
+    if (!passwordRegex.hasMatch(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Password must be at least 8 characters long and include at least one uppercase letter.')),
       );
       return;
     }
@@ -65,7 +83,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account already exists.')),
+        SnackBar(content: Text('invalid e-mail address.')),
       );
     }
   }

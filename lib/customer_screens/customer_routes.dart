@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CustomerRoutesPage extends StatefulWidget {
   @override
@@ -66,7 +67,7 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
                 BitmapDescriptor.hueViolet);
             break;
           case 'Plastics':
-            routeColor = Colors.black;
+            routeColor = Colors.blue;
             routeIcon =
                 BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan);
             break;
@@ -194,6 +195,30 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
     _fitCameraToBounds();
   }
 
+  Future<void> _saveLocation() async {
+    if (_customerLocation == null) return;
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'saved_location': GeoPoint(
+              _customerLocation!.latitude, _customerLocation!.longitude),
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Location saved successfully')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save location: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -206,15 +231,36 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
               target: LatLng(37.7749, -122.4194), // Default to San Francisco
-              zoom: 18, // Increased zoom level for a more zoomed-in view
+              zoom: 14,
             ),
             markers: _markers,
             polylines: _polylines,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
           ),
           if (_isLoading)
             Center(
               child: CircularProgressIndicator(),
             ),
+        ],
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              if (_customerLocation != null) {
+                _controller
+                    ?.animateCamera(CameraUpdate.newLatLng(_customerLocation!));
+              }
+            },
+            child: Icon(Icons.my_location),
+          ),
+          SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: _saveLocation,
+            child: Icon(Icons.save),
+          ),
         ],
       ),
     );

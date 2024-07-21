@@ -14,22 +14,34 @@ class CustomerInfoFormPage extends StatefulWidget {
 class _CustomerInfoFormPageState extends State<CustomerInfoFormPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
+  bool _isTermsAccepted = false;
 
-  String name = '';
+  String firstName = '';
+  String lastName = '';
   String address = '';
   String phoneNumber = '';
   String postalCode = '';
   String nic = '';
+  String city = '';
 
   void saveCustomerInfo() async {
     if (_formKey.currentState?.validate() ?? false) {
+      if (!_isTermsAccepted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You must accept the terms and conditions.')),
+        );
+        return;
+      }
+
       try {
         await _firestore.collection('users').doc(widget.user.uid).update({
-          'name': name,
+          'first_name': firstName,
+          'last_name': lastName,
           'address': address,
           'phone_number': phoneNumber,
           'postal_code': postalCode,
           'nic_no': nic,
+          'city': city,
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,16 +68,28 @@ class _CustomerInfoFormPageState extends State<CustomerInfoFormPage> {
         padding: EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
+          child: ListView(
             children: [
               TextFormField(
                 onChanged: (value) {
-                  name = value;
+                  firstName = value;
                 },
-                decoration: InputDecoration(hintText: 'Name'),
+                decoration: InputDecoration(hintText: 'First Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
+                    return 'Please enter your first name';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                onChanged: (value) {
+                  lastName = value;
+                },
+                decoration: InputDecoration(hintText: 'Last Name'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your last name';
                   }
                   return null;
                 },
@@ -118,6 +142,29 @@ class _CustomerInfoFormPageState extends State<CustomerInfoFormPage> {
                   return null;
                 },
               ),
+              TextFormField(
+                onChanged: (value) {
+                  city = value;
+                },
+                decoration: InputDecoration(hintText: 'City'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your city';
+                  }
+                  return null;
+                },
+              ),
+              CheckboxListTile(
+                title: Text("I accept the terms and conditions"),
+                value: _isTermsAccepted,
+                onChanged: (newValue) {
+                  setState(() {
+                    _isTermsAccepted = newValue ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              SizedBox(height: 20),
               ElevatedButton(
                 onPressed: saveCustomerInfo,
                 child: Text('Save Information'),

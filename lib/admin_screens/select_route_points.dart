@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-const kGoogleApiKey = "AIzaSyBmwKB0_BzuuI4gTjWsYruUKBWTWy7Cozw";
-
-GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
 
 class SelectRoutePointsPage extends StatefulWidget {
   @override
@@ -18,7 +12,6 @@ class SelectRoutePointsPage extends StatefulWidget {
 class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
   GoogleMapController? _controller;
   List<LatLng> _routePoints = [];
-  final TextEditingController _searchController = TextEditingController();
   Set<Polyline> _polylines = {};
   Set<Marker> _markers = {};
   bool _isLoading = false;
@@ -131,39 +124,6 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
     }
   }
 
-  Future<void> _handleSearch() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      Prediction? p = await PlacesAutocomplete.show(
-        context: context,
-        apiKey: kGoogleApiKey,
-        mode: Mode.overlay,
-        language: "en",
-        components: [Component(Component.country, "us")],
-      );
-
-      if (p != null) {
-        PlacesDetailsResponse detail =
-            await _places.getDetailsByPlaceId(p.placeId!);
-        final lat = detail.result.geometry!.location.lat;
-        final lng = detail.result.geometry!.location.lng;
-        _controller?.animateCamera(CameraUpdate.newLatLng(LatLng(lat, lng)));
-      }
-    } catch (e) {
-      print("Error occurred during search: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Search failed. Please try again.')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,42 +138,20 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
       ),
       body: Stack(
         children: [
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  readOnly: true,
-                  onTap: _handleSearch,
-                  decoration: InputDecoration(
-                    hintText: 'Search location',
-                    suffixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GoogleMap(
-                  onMapCreated: _onMapCreated,
-                  initialCameraPosition: CameraPosition(
-                    target:
-                        LatLng(37.7749, -122.4194), // Default to San Francisco
-                    zoom: 12,
-                  ),
-                  onTap: _onTap,
-                  markers: _markers.union({
-                    ..._routePoints.map((point) => Marker(
-                          markerId: MarkerId(point.toString()),
-                          position: point,
-                        )),
-                  }),
-                  polylines: _polylines,
-                ),
-              ),
-            ],
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: LatLng(37.7749, -122.4194), // Default to San Francisco
+              zoom: 12,
+            ),
+            onTap: _onTap,
+            markers: _markers.union({
+              ..._routePoints.map((point) => Marker(
+                    markerId: MarkerId(point.toString()),
+                    position: point,
+                  )),
+            }),
+            polylines: _polylines,
           ),
           if (_isLoading)
             Center(

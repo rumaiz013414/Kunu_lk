@@ -17,6 +17,15 @@ class _LoginPageState extends State<LoginPage> {
   String password = '';
 
   void loginUser() async {
+    if (email.isEmpty || password.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Email and password fields cannot be empty.')),
+        );
+      }
+      return;
+    }
+
     try {
       User? user =
           await _authService.signInWithEmailAndPassword(email, password);
@@ -34,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed. Please try again.')),
+          SnackBar(content: Text('Invalid e-mail or password')),
         );
       }
     }
