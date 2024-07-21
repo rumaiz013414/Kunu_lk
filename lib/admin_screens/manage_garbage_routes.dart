@@ -170,98 +170,119 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
         title: Text('Manage Garbage Collection Routes'),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: _selectRoutePoints,
-                      child: Text('Select Route Points'),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: _selectRoutePoints,
+                    child: Text('Select Route Points'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Colors.orange, // Change button color here
+                      padding: EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 24.0),
+                      foregroundColor: Colors.white, // Change text color here
                     ),
-                    if (_routePoints.isNotEmpty)
-                      Column(
+                  ),
+                  if (_routePoints.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Selected Route Points:'),
-                          ..._routePoints.map((point) =>
-                              Text('(${point.latitude}, ${point.longitude})')),
+                          ..._routePoints.map((point) => Text(
+                              '(${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)})')),
                         ],
                       ),
-                    TextFormField(
-                      controller: _startTimeController,
-                      readOnly: true,
-                      decoration:
-                          InputDecoration(labelText: 'Estimated Start Time'),
-                      onTap: () => _selectTime(context, _startTimeController),
                     ),
-                    TextFormField(
-                      controller: _endTimeController,
-                      readOnly: true,
-                      decoration:
-                          InputDecoration(labelText: 'Estimated End Time'),
-                      onTap: () => _selectTime(context, _endTimeController),
+                  TextFormField(
+                    controller: _startTimeController,
+                    readOnly: true,
+                    decoration:
+                        InputDecoration(labelText: 'Estimated Start Time'),
+                    onTap: () => _selectTime(context, _startTimeController),
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _endTimeController,
+                    readOnly: true,
+                    decoration:
+                        InputDecoration(labelText: 'Estimated End Time'),
+                    onTap: () => _selectTime(context, _endTimeController),
+                  ),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedWasteType,
+                    decoration: InputDecoration(labelText: 'Waste Type'),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'Electronics',
+                        child: Text('Electronics'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Plastics',
+                        child: Text('Plastics'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Paper',
+                        child: Text('Paper'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedWasteType = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select a waste type';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _createRoute,
+                    child: Text('Create Route'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green, // Change button color here
+                      padding: EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 24.0),
+                      foregroundColor: Colors.white, // Change text color here
                     ),
-                    DropdownButtonFormField<String>(
-                      value: _selectedWasteType,
-                      decoration: InputDecoration(labelText: 'Waste Type'),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'Electronics',
-                          child: Text('Electronics'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Plastics',
-                          child: Text('Plastics'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Paper',
-                          child: Text('Paper'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedWasteType = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Please select a waste type';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _createRoute,
-                      child: Text('Create Route'),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              SizedBox(height: 20),
-              Text(
-                'Available Routes',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('garbage_routes')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
-                  }
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Available Routes',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('garbage_routes')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
-                  return ListView(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    children: snapshot.data!.docs.map((doc) {
-                      return ListTile(
+                return ListView(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  children: snapshot.data!.docs.map((doc) {
+                    return Card(
+                      margin: EdgeInsets.symmetric(vertical: 8.0),
+                      elevation: 4.0,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(16.0),
                         title: Text(
                             'Route: (${doc['route_points'][0]['latitude']}, ${doc['route_points'][0]['longitude']}) to (${doc['route_points'].last['latitude']}, ${doc['route_points'].last['longitude']})'),
                         subtitle: Text(
@@ -271,25 +292,27 @@ class _ManageGarbageRoutesPageState extends State<ManageGarbageRoutesPage> {
                           children: [
                             IconButton(
                               icon: Icon(Icons.edit),
+                              color: Colors.blue, // Change icon color here
                               onPressed: () {
                                 _editRoute(doc);
                               },
                             ),
                             IconButton(
                               icon: Icon(Icons.delete),
+                              color: Colors.red, // Change icon color here
                               onPressed: () {
                                 _deleteRoute(doc.id);
                               },
                             ),
                           ],
                         ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
-            ],
-          ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

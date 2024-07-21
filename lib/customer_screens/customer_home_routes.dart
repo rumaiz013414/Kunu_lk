@@ -36,6 +36,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFFFF9C4), // Banana yellow background color
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
@@ -55,7 +56,11 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Color.fromARGB(
+            255, 185, 162, 27), // Subtle banana yellow for selected item
+        unselectedItemColor: Colors.black, // Unselected item color
+        backgroundColor:
+            Color(0xFFFDF6C4), // Light banana yellow for the background
         onTap: _onItemTapped,
       ),
     );
