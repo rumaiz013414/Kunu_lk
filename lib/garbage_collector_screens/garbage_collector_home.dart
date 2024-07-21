@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../garbage_collector_screens/garbage_collection_routes.dart';
 import '../garbage_collector_screens/garbage_collector_profile/garbage_profile_details.dart';
 
 class GarbageCollectorHomePage extends StatefulWidget {
@@ -12,7 +13,7 @@ class _GarbageCollectorHomePageState extends State<GarbageCollectorHomePage> {
 
   static List<Widget> _widgetOptions = <Widget>[
     Text('Home Page'),
-    Text('Collections'),
+    GarbageCollectionRoutes(),
     GarbageCollectorProfileSection(),
   ];
 

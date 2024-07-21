@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 
 class GarbageCollectionRoutes extends StatelessWidget {
+  const GarbageCollectionRoutes({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Garbage Collection Routes'),
-      ),
-      body: Center(
-        child: Text('Content goes here'),
-      ),
-    );
+    return const Placeholder();
   }
 }

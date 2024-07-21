@@ -4,7 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const kGoogleApiKey = "AIzaSyBmwKB0_BzuuI4gTjWsYruUKBWTWy7Cozw";
 
@@ -27,7 +27,7 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
   void initState() {
     super.initState();
     _checkLocationPermission();
-    _fetchCustomerLocations(); // Fetch customer locations on init
+    _fetchCustomerLocations();
   }
 
   Future<void> _checkLocationPermission() async {
