@@ -5,8 +5,37 @@ import './edit_customer.dart';
 class ViewCustomersPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _deleteCustomer(String customerId) {
-    _firestore.collection('users').doc(customerId).delete();
+  void _deleteCustomer(BuildContext context, String customerId) async {
+    bool confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Customer'),
+        content: Text('Are you sure you want to delete this customer?'),
+        actions: [
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: Text('Delete'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed) {
+      try {
+        await _firestore.collection('users').doc(customerId).delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Customer deleted successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete customer: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -42,32 +71,35 @@ class ViewCustomersPage extends StatelessWidget {
               final customerName = customerData['name'] ?? 'Unknown';
               final customerEmail = customerData['email'] ?? 'Unknown';
 
-              return ListTile(
-                title: Text(customerName),
-                subtitle: Text(customerEmail),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditCustomerPage(
-                                customerId: customerId,
-                                customerData: customerData),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        _deleteCustomer(customerId);
-                      },
-                    ),
-                  ],
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: ListTile(
+                  title: Text(customerName),
+                  subtitle: Text(customerEmail),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditCustomerPage(
+                                  customerId: customerId,
+                                  customerData: customerData),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          _deleteCustomer(context, customerId);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

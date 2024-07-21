@@ -35,6 +35,15 @@ class _EditGarbageCollectorPageState extends State<EditGarbageCollectorPage> {
     });
   }
 
+  void _deleteCollector() {
+    _firestore.collection('users').doc(widget.collectorId).delete().then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Successfully deleted')),
+      );
+      Navigator.pop(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,9 +61,19 @@ class _EditGarbageCollectorPageState extends State<EditGarbageCollectorPage> {
               decoration: InputDecoration(labelText: 'Email'),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _updateCollector,
-              child: Text('Save Changes'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: _updateCollector,
+                  child: Text('Save Changes'),
+                ),
+                ElevatedButton(
+                  onPressed: _deleteCollector,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: Text('Delete'),
+                ),
+              ],
             ),
           ],
         ),

@@ -5,8 +5,38 @@ import './edit_garbage_collector.dart';
 class ViewGarbageCollectorsPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _deleteGarbageCollector(String collectorId) {
-    _firestore.collection('users').doc(collectorId).delete();
+  void _deleteGarbageCollector(BuildContext context, String collectorId) async {
+    bool confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Garbage Collector'),
+        content:
+            Text('Are you sure you want to delete this garbage collector?'),
+        actions: [
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: Text('Delete'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed) {
+      try {
+        await _firestore.collection('users').doc(collectorId).delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Garbage collector deleted successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete garbage collector: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -42,32 +72,35 @@ class ViewGarbageCollectorsPage extends StatelessWidget {
               final collectorName = collectorData['name'] ?? 'Unknown';
               final collectorEmail = collectorData['email'] ?? 'Unknown';
 
-              return ListTile(
-                title: Text(collectorName),
-                subtitle: Text(collectorEmail),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditGarbageCollectorPage(
-                                collectorId: collectorId,
-                                collectorData: collectorData),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        _deleteGarbageCollector(collectorId);
-                      },
-                    ),
-                  ],
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: ListTile(
+                  title: Text(collectorName),
+                  subtitle: Text(collectorEmail),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditGarbageCollectorPage(
+                                  collectorId: collectorId,
+                                  collectorData: collectorData),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          _deleteGarbageCollector(context, collectorId);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

@@ -28,17 +28,19 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
     if (await Permission.location.request().isGranted) {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      setState(() {
-        _customerLocation = LatLng(position.latitude, position.longitude);
-        _markers.add(Marker(
-          markerId: MarkerId('customer'),
-          position: _customerLocation!,
-          infoWindow: InfoWindow(
-            title: 'Your Location',
-          ),
-        ));
-      });
-      _controller?.animateCamera(CameraUpdate.newLatLng(_customerLocation!));
+      if (mounted) {
+        setState(() {
+          _customerLocation = LatLng(position.latitude, position.longitude);
+          _markers.add(Marker(
+            markerId: MarkerId('customer'),
+            position: _customerLocation!,
+            infoWindow: InfoWindow(
+              title: 'Your Location',
+            ),
+          ));
+        });
+        _controller?.animateCamera(CameraUpdate.newLatLng(_customerLocation!));
+      }
     }
   }
 
@@ -104,18 +106,22 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
         ));
       }
 
-      setState(() {
-        _findClosestRoute();
-      });
+      if (mounted) {
+        setState(() {
+          _findClosestRoute();
+        });
+      }
 
       // Adjust the camera to fit all markers and polylines
       _fitCameraToBounds();
     } catch (e) {
       print("Error fetching routes: $e");
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

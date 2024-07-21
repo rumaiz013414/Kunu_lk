@@ -108,12 +108,12 @@ class _CustomerInfoFormPageState extends State<CustomerInfoFormPage> {
               ),
               TextFormField(
                 onChanged: (value) {
-                  phoneNumber = value;
+                  city = value;
                 },
-                decoration: InputDecoration(hintText: 'Phone Number'),
+                decoration: InputDecoration(hintText: 'City'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
+                    return 'Please enter your city';
                   }
                   return null;
                 },
@@ -132,24 +132,24 @@ class _CustomerInfoFormPageState extends State<CustomerInfoFormPage> {
               ),
               TextFormField(
                 onChanged: (value) {
-                  nic = value;
+                  phoneNumber = value;
                 },
-                decoration: InputDecoration(hintText: 'NIC No.'),
+                decoration: InputDecoration(hintText: 'Phone Number'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your NIC number';
+                    return 'Please enter your phone number';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 onChanged: (value) {
-                  city = value;
+                  nic = value;
                 },
-                decoration: InputDecoration(hintText: 'City'),
+                decoration: InputDecoration(hintText: 'NIC No.'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your city';
+                    return 'Please enter your NIC number';
                   }
                   return null;
                 },

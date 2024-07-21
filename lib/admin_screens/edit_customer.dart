@@ -33,6 +33,15 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
     });
   }
 
+  void _deleteCustomer() {
+    _firestore.collection('users').doc(widget.customerId).delete().then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Successfully deleted')),
+      );
+      Navigator.pop(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,9 +59,19 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
               decoration: InputDecoration(labelText: 'Email'),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _updateCustomer,
-              child: Text('Save Changes'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: _updateCustomer,
+                  child: Text('Save Changes'),
+                ),
+                ElevatedButton(
+                  onPressed: _deleteCustomer,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: Text('Delete'),
+                ),
+              ],
             ),
           ],
         ),
