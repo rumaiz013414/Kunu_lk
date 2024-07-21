@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:testing/customer_screens/customer_profile/customer_profile_details.dart';
 import 'package:testing/customer_screens/customer_profile/customer_profile_photo.dart';
 import 'package:testing/garbage_collector_screens/garbage_collector_profile/garbage_profile_details.dart';
-import 'package:testing/garbage_collector_screens/garbage_collection_routes.dart';
+
 import 'common/authentication_screens/login_screen.dart';
 import 'common/authentication_screens/registration_screen.dart';
 import 'common/authentication_screens/password_reset_screen.dart';
@@ -16,6 +16,8 @@ import 'customer_screens/customer_info_form.dart';
 import 'common/services/auth_wrapper.dart';
 import 'garbage_collector_screens/garbage_collector_profile/edit_garbage_profile.dart';
 import 'customer_screens/customer_profile/edit_customer_profile.dart';
+import './garbage_collector_screens/garbage_collection_routes.dart';
+import './garbage_collector_screens/garbage_collector_route_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +55,6 @@ class MyApp extends StatelessWidget {
         '/garbageCollectorInfoForm': (context) => GarbageCollectorInfoFormPage(
               user: ModalRoute.of(context)!.settings.arguments as User,
             ),
-        '/garbageCollectionRoutes': (context) => GarbageCollectionRoutes(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/customerInfoForm') {
