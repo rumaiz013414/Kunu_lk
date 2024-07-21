@@ -16,8 +16,6 @@ import 'customer_screens/customer_info_form.dart';
 import 'common/services/auth_wrapper.dart';
 import 'garbage_collector_screens/garbage_collector_profile/edit_garbage_profile.dart';
 import 'customer_screens/customer_profile/edit_customer_profile.dart';
-import './garbage_collector_screens/garbage_collection_routes.dart';
-import './garbage_collector_screens/garbage_collector_route_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

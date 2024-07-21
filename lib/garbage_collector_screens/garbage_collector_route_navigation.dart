@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GarbageCollectorRouteNavigationPage extends StatefulWidget {
   final List<LatLng> routePoints;
@@ -16,11 +17,13 @@ class _GarbageCollectorRouteNavigationPageState
   GoogleMapController? _mapController;
   Set<Polyline> _polylines = {};
   Set<Marker> _markers = {};
+  List<LatLng> _customerLocations = [];
 
   @override
   void initState() {
     super.initState();
     _setRoute();
+    _fetchCustomerLocations();
   }
 
   void _setRoute() {
@@ -72,11 +75,43 @@ class _GarbageCollectorRouteNavigationPageState
     );
   }
 
+  void _fetchCustomerLocations() async {
+    try {
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+      List<LatLng> locations = snapshot.docs.map((doc) {
+        GeoPoint point = doc['current_location'];
+        return LatLng(point.latitude, point.longitude);
+      }).toList();
+
+      setState(() {
+        _customerLocations = locations;
+        _setCustomerMarkers();
+      });
+    } catch (e) {
+      print('Error fetching customer locations: $e');
+    }
+  }
+
+  void _setCustomerMarkers() {
+    final markers = _customerLocations.map((point) {
+      return Marker(
+        markerId: MarkerId('customer_${point.latitude},${point.longitude}'),
+        position: point,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      );
+    }).toSet();
+
+    setState(() {
+      _markers.addAll(markers);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Collection Route'),
+        title: Text('Garbage Collection Route'),
       ),
       body: GoogleMap(
         onMapCreated: (controller) {
