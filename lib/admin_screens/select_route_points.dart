@@ -27,8 +27,12 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
     if (await Permission.location.request().isGranted) {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      _controller?.animateCamera(CameraUpdate.newLatLng(
-          LatLng(position.latitude, position.longitude)));
+      if (mounted) {
+        setState(() {
+          _controller?.animateCamera(CameraUpdate.newLatLng(
+              LatLng(position.latitude, position.longitude)));
+        });
+      }
     }
   }
 
@@ -45,16 +49,16 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
 
       for (var doc in snapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
-        if (data.containsKey('current_location')) {
-          var location = data['current_location'];
-          var lat = location['latitude'];
-          var lng = location['longitude'];
+        if (data.containsKey('saved_location')) {
+          var location = data['saved_location'];
+          var lat = location.latitude;
+          var lng = location.longitude;
 
           markers.add(Marker(
             markerId: MarkerId(doc.id),
             position: LatLng(lat, lng),
             infoWindow: InfoWindow(
-              title: doc.id,
+              title: 'Customer: ${doc.id}',
               snippet: 'Lat: $lat, Lng: $lng',
             ),
             icon: BitmapDescriptor.defaultMarkerWithHue(
@@ -66,6 +70,13 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
       setState(() {
         _markers = markers;
       });
+
+      // Adjust the camera to fit all markers
+      if (_markers.isNotEmpty) {
+        LatLngBounds bounds =
+            _getLatLngBounds(_markers.map((m) => m.position).toList());
+        _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+      }
     } catch (e) {
       print("Error fetching customer locations: $e");
     } finally {
@@ -73,6 +84,25 @@ class _SelectRoutePointsPageState extends State<SelectRoutePointsPage> {
         _isLoading = false;
       });
     }
+  }
+
+  LatLngBounds _getLatLngBounds(List<LatLng> points) {
+    double x0 = points[0].latitude;
+    double x1 = points[0].latitude;
+    double y0 = points[0].longitude;
+    double y1 = points[0].longitude;
+
+    for (LatLng point in points) {
+      if (point.latitude > x1) x1 = point.latitude;
+      if (point.latitude < x0) x0 = point.latitude;
+      if (point.longitude > y1) y1 = point.longitude;
+      if (point.longitude < y0) y0 = point.longitude;
+    }
+
+    return LatLngBounds(
+      northeast: LatLng(x1, y1),
+      southwest: LatLng(x0, y0),
+    );
   }
 
   void _onMapCreated(GoogleMapController controller) {
