@@ -21,7 +21,6 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
   void initState() {
     super.initState();
     _checkLocationPermission();
-    _fetchRoutes();
   }
 
   Future<void> _checkLocationPermission() async {
@@ -40,6 +39,7 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
           ));
         });
         _controller?.animateCamera(CameraUpdate.newLatLng(_customerLocation!));
+        _fetchRoutes();
       }
     }
   }
@@ -50,70 +50,101 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
     });
 
     try {
-      QuerySnapshot snapshot =
-          await FirebaseFirestore.instance.collection('garbage_routes').get();
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Fetch the user's assigned routes
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        List<dynamic> assignedRoutes = userDoc.get('assigned_routes') ?? [];
 
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        var routePoints = (data['route_points'] as List)
-            .map((point) => LatLng(point['latitude'], point['longitude']))
-            .toList();
-        var wasteType = data['waste_type'];
+        QuerySnapshot snapshot =
+            await FirebaseFirestore.instance.collection('garbage_routes').get();
 
-        Color routeColor;
-        BitmapDescriptor routeIcon;
-        switch (wasteType) {
-          case 'Electronics':
-            routeColor = Colors.red;
-            routeIcon = BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueViolet);
-            break;
-          case 'Plastics':
-            routeColor = Colors.blue;
-            routeIcon =
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan);
-            break;
-          case 'Paper':
-            routeColor = Colors.green;
-            routeIcon = BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueGreen);
-            break;
-          default:
-            routeColor = Colors.grey;
-            routeIcon = BitmapDescriptor.defaultMarker;
-            break;
-        }
+        for (var doc in snapshot.docs) {
+          var data = doc.data() as Map<String, dynamic>;
+          var routePoints = (data['route_points'] as List)
+              .map((point) => LatLng(point['latitude'], point['longitude']))
+              .toList();
+          var wasteType = data['waste_type'];
 
-        // Create markers for each route point
-        for (var point in routePoints) {
-          _markers.add(Marker(
-            markerId:
-                MarkerId('${doc.id}_${point.latitude}_${point.longitude}'),
-            position: point,
-            icon: routeIcon,
-            infoWindow: InfoWindow(
-              title: '$wasteType Route Point',
-            ),
+          // Check if the route is assigned to the user
+          if (!assignedRoutes.contains(doc.id)) continue;
+
+          Color routeColor;
+          BitmapDescriptor routeIcon;
+          switch (wasteType) {
+            case 'Electronics':
+              routeColor = Colors.red;
+              routeIcon = BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueViolet);
+              break;
+            case 'Plastics':
+              routeColor = Colors.blue;
+              routeIcon = BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueCyan);
+              break;
+            case 'Paper':
+              routeColor = Colors.green;
+              routeIcon = BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueGreen);
+              break;
+            default:
+              routeColor = Colors.grey;
+              routeIcon = BitmapDescriptor.defaultMarker;
+              break;
+          }
+
+          // Filter out routes beyond 100 meters from the customer location
+          bool isRouteWithinRange = routePoints.any((point) {
+            double distance = Geolocator.distanceBetween(
+              _customerLocation!.latitude,
+              _customerLocation!.longitude,
+              point.latitude,
+              point.longitude,
+            );
+            return distance <= 100; // 100 meters
+          });
+
+          if (!isRouteWithinRange) continue;
+
+          // Create markers for each route point within 100 meters
+          for (var point in routePoints) {
+            double distance = Geolocator.distanceBetween(
+              _customerLocation!.latitude,
+              _customerLocation!.longitude,
+              point.latitude,
+              point.longitude,
+            );
+            if (distance <= 100) {
+              _markers.add(Marker(
+                markerId:
+                    MarkerId('${doc.id}_${point.latitude}_${point.longitude}'),
+                position: point,
+                icon: routeIcon,
+                infoWindow: InfoWindow(
+                  title: '$wasteType Route Point',
+                ),
+              ));
+            }
+          }
+
+          // Create a polyline for the route
+          _polylines.add(Polyline(
+            polylineId: PolylineId(doc.id),
+            points: routePoints,
+            color: routeColor,
+            width: 5,
           ));
         }
 
-        // Create a polyline for the route
-        _polylines.add(Polyline(
-          polylineId: PolylineId(doc.id),
-          points: routePoints,
-          color: routeColor,
-          width: 5,
-        ));
+        if (mounted) {
+          setState(() {
+            _fitCameraToBounds();
+          });
+        }
       }
-
-      if (mounted) {
-        setState(() {
-          _findClosestRoute();
-        });
-      }
-
-      // Adjust the camera to fit all markers and polylines
-      _fitCameraToBounds();
     } catch (e) {
       print("Error fetching routes: $e");
     } finally {
@@ -131,49 +162,6 @@ class _CustomerRoutesPageState extends State<CustomerRoutesPage> {
     LatLngBounds bounds =
         _getLatLngBounds(_markers.map((m) => m.position).toList());
     _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-  }
-
-  void _findClosestRoute() {
-    if (_customerLocation == null || _polylines.isEmpty) return;
-
-    double minDistance = 100; // 100 meters
-    Polyline? closestRoute;
-
-    for (var polyline in _polylines) {
-      for (var point in polyline.points) {
-        double dist = Geolocator.distanceBetween(
-          _customerLocation!.latitude,
-          _customerLocation!.longitude,
-          point.latitude,
-          point.longitude,
-        );
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestRoute = polyline;
-        }
-      }
-    }
-
-    if (closestRoute != null) {
-      _markers.add(Marker(
-        markerId: MarkerId('closest_route'),
-        position: closestRoute.points.first,
-        infoWindow: InfoWindow(
-          title: 'Closest Route',
-        ),
-      ));
-      _controller?.animateCamera(CameraUpdate.newLatLngBounds(
-        _getLatLngBounds(closestRoute.points),
-        50,
-      ));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Found the closest route within 100 meters')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No route found within 100 meters')),
-      );
-    }
   }
 
   LatLngBounds _getLatLngBounds(List<LatLng> points) {
