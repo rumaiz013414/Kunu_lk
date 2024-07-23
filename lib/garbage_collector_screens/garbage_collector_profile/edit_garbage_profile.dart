@@ -6,10 +6,10 @@ import 'package:flutter/widgets.dart';
 
 class EditGarbageProfilePage extends StatefulWidget {
   @override
-  _EditProfilePageState createState() => _EditProfilePageState();
+  _EditGarbageProfilePageState createState() => _EditGarbageProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditGarbageProfilePage> {
+class _EditGarbageProfilePageState extends State<EditGarbageProfilePage> {
   TextEditingController _nameController = TextEditingController();
   TextEditingController _phoneNumberController = TextEditingController();
   TextEditingController _vehicleDetailsController = TextEditingController();
@@ -22,7 +22,10 @@ class _EditProfilePageState extends State<EditGarbageProfilePage> {
   void dispose() {
     _nameController.dispose();
     _phoneNumberController.dispose();
+    _vehicleDetailsController.dispose();
+    _nicController.dispose();
     _addressController.dispose();
+    _cityController.dispose();
     _postalCodeController.dispose();
     super.dispose();
   }
@@ -84,40 +87,98 @@ class _EditProfilePageState extends State<EditGarbageProfilePage> {
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
+            child: ListView(
               children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: _phoneNumberController,
-                  decoration: InputDecoration(labelText: 'Phone Number'),
-                ),
-                TextField(
-                  controller: _vehicleDetailsController,
-                  decoration: InputDecoration(labelText: 'Vehicle Details'),
-                ),
-                TextField(
-                  controller: _nicController,
-                  decoration: InputDecoration(labelText: 'NIC'),
-                ),
-                TextField(
-                  controller: _addressController,
-                  decoration: InputDecoration(labelText: 'Address'),
-                ),
-                TextField(
-                  controller: _cityController,
-                  decoration: InputDecoration(labelText: 'City'),
-                ),
-                TextField(
-                  controller: _postalCodeController,
-                  decoration: InputDecoration(labelText: 'Postal Code'),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: updateUserProfile,
-                  child: Text('Save'),
+                Card(
+                  elevation: 4,
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Personal Information',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Name',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _phoneNumberController,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            labelText: 'Phone Number',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _vehicleDetailsController,
+                          decoration: InputDecoration(
+                            labelText: 'Vehicle Details',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _nicController,
+                          decoration: InputDecoration(
+                            labelText: 'NIC',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _addressController,
+                          decoration: InputDecoration(
+                            labelText: 'Address',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _cityController,
+                          decoration: InputDecoration(
+                            labelText: 'City',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: _postalCodeController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Postal Code',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: updateUserProfile,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 15),
+                              child: Text(
+                                'Save',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -36,7 +36,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFFF9C4), // Banana yellow background color
+      backgroundColor: Color(0xFFFFF9C4),
+      // Banana yellow background color
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
